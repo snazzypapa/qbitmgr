@@ -1,6 +1,7 @@
 # qbitmgr
 Automatically manage qbittorrent share limits, RSS rules, and file moves
 
+Supports qBittorrent v4.1.0+ (i.e. Web API v2.0+). Currently supports up to qBittorrent [v4.3.8](https://github.com/qbittorrent/qBittorrent/releases/tag/release-4.3.8) (Web API v2.8.2) released on Aug 28, 2021.
 
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-blue.svg?style=flat-square)](https://www.python.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%203-blue.svg?style=flat-square)](https://github.com/snazzypapa/qbitmgr/blob/master/LICENSE.md)
@@ -28,7 +29,7 @@ Qbitmgr has 3 main functions:
 
 3. Automatic download handling turned on in qbittorrent with an incomplete directory and a completed directory. It does not matter what these are named as long as you know their paths. 
 
-4. Python 3.5 or higher (`sudo apt install python3 python3-pip`).
+4. Python 3.6 or higher (`sudo apt install python3 python3-pip`).
 
 5. Required Python modules (see below).
 
