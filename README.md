@@ -124,7 +124,7 @@ keyword arguments:
 
 This is my first project and I want to credit a few other programmers for their contributions on their own projects and for inspiring me to create a project of my own.
 
-* l3uddz for all of his useful and professional projects.  I used his logging configuration from Cloudplow and his README template from TQM -- another qbittorrent manager. https://github.com/l3uddz
+* l3uddz for all of his useful and professional projects.  I used his logging configuration and README template from Cloudplow.  https://github.com/l3uddz
 * Tomodoro for his simple but elegant solution for managing seed queues and uses some of the same tools as I used.  https://github.com/Tomodoro/qbitseedmgr
 * Countless stackoverflow users for their questions and answers. 
 
