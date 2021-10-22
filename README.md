@@ -91,7 +91,7 @@ Qbitmgr has 3 main functions:
 
 ## Automatic
 
-A filesystem watcher service looks for changes to the incomplete downloads directory and 
+A filesystem watcher service looks for changes to the incomplete downloads directory and sets share limits and moves files according to the config file. This is set up via the final step of the installation process.
 
 ## Manual (CLI)
 
