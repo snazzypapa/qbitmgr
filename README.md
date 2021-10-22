@@ -105,8 +105,8 @@ usage: qbitmgr {add-cat,add-rule,move,set-limits} [--name] [--genre]
                  
 positional arguments:
   {add-cat,add-rule,move,set-limits,watch}
-                        "add-cat": adds new category to qbittorrent and sets completed download directory to specified genre, requires '--genre ' 
-                        "add-rule": adds new categgory and new RSS auto download rule to qbittorrent and sets completed download directory to specified genre, requires '--genre '
+                        "add-cat": adds new category to qbittorrent and sets completed download directory to specified genre. Requires '--genre' and '--name' keyword arguments.
+                        "add-rule": adds new categgory and new RSS auto download rule to qbittorrent and sets completed download directory to specified genre. Requires '--genre' and '--name' keyword arguments.
                         "move":  deletes unwanted files and moves completed downloads from the qbittorrent downloads directory to whatever directory you prefer  
                         "set-limits": sets share limits in qbittorrent via the qbittorrent API
                         "watch": starts filesystem watcher for new and completed torrents
