@@ -1,5 +1,5 @@
 # qbitmgr
-Automatically manage qbittorrent share limits, RSS rules, and file moves
+Automatically manage qbittorrent share limits, RSS rules, and file moves.
 
 Supports qBittorrent v4.1.0+ (i.e. Web API v2.0+). Currently supports up to qBittorrent [v4.3.8](https://github.com/qbittorrent/qBittorrent/releases/tag/release-4.3.8) (Web API v2.8.2) released on Aug 28, 2021.
 
