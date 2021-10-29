@@ -1,0 +1,21 @@
+# copy this file to: sudo cp /opt/qbitmgr/systemd/qbitmgr.service /etc/systemd/system/qbitmgr.service
+# start service with: sudo systemctl start qbitmgr
+# enable start at boot: sudo systemctl enable qbitmgr
+# if you need to change the config file, restart the service with: sudo systemctl restart qbitmgr
+# if you need to change the python code, reload the systemctl daemon: sudo systemctl daemon-reload
+
+[Unit]
+Description=qbitmgr
+After=network-online.target
+
+[Service]
+User=$USER
+Group=$USER
+Type=simple
+WorkingDirectory=/opt/qbitmgr
+ExecStart=/usr/bin/python3 /opt/qbitmgr/qbitmgr.py run
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
