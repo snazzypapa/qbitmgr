@@ -23,11 +23,11 @@ class LimitGroup:
         client.torrents_set_share_limits(self.ratio_limit, self.seeding_time_limit, torrent_hashes=self.hashes)
         client.torrents_set_upload_limit(self.upload_speed_limit, torrent_hashes=self.hashes)
         client.torrents_add_tags(self.tags, torrent_hashes=self.hashes)
-        log.info(f'Limit set to {self.group} for {self.names}')
+        log.debug(f'Limit set to {self.group} for {self.names}')
         if self.group != 'private':
             return
         client.torrents_top_priority(torrent_hashes=self.hashes)
-        log.info(f'Moved private torrent to top of queue: {self.names}')
+        log.debug(f'Moved private torrent to top of queue: {self.names}')
 
 
 def return_index_of_dict_in_list(lst, key, value):
@@ -45,7 +45,7 @@ class GroupAssignments:
     def assign_categories(self):
         categories = [{'group': i, 'names': [], 'hashes': []} for i in self.groups]
 
-        for torrent in client.torrents_info():
+        for torrent in client.torrents_info(status_filter='downloading'):
             if torrent.tags != '':
                 continue
             if torrent.trackers[0]['msg'] == 'This torrent is private':
@@ -56,8 +56,6 @@ class GroupAssignments:
                 index = return_index_of_dict_in_list(categories, 'group', 'default')
             categories[index]['hashes'].append(torrent.hash)
             categories[index]['names'].append(torrent.name)
-
-        #[categories.remove(i) for i in categories.copy() if not i['hashes']]
 
         return [LimitGroup(**i) for i in categories if i['hashes']] # The double splat converts dict to keyword arguments
 

@@ -1,0 +1,77 @@
+#### App Details
+logLevel = 'INFO' # Always all uppercase
+
+#### Qbittorrent WebUI Login Details
+host = 'localhost:8080' # web address and port of qbittorrent webui
+username = 'username'
+password = 'password123'
+
+#### File Movers
+incompleteDownloadsDir = '/mnt/local/downloads/qbittorrent/incoming' # Full path without trailing slash
+completeDownloadsDir = '/mnt/local/downloads/qbittorrent/completed' # Full path without trailing slash
+plexScanCommand = ['docker', 'exec', 'plex', '/usr/lib/plexmediaserver/Plex Media Scanner', '--scan'] # Python list format with arguments
+cleanerInterval = 10 # Minutes between checking for completed seeds 
+
+#### Share Limits
+[shareLimits]
+    [shareLimits.private]
+        ratio_limit = -1 # ratio_limit – max ratio to seed a torrent. (-2 means use the global value and -1 is no limit)
+        seeding_time_limit = 4320 # seeding_time_limit – minutes (-2 means use the global value and -1 is no limit)
+        upload_speed_limit = -1 # upload_speed_limit – bytes/second (-1 sets the limit to infinity)
+        tags = 'Private' # tag to add to the download. This is not 100% necessary but it is recommended to include a tag to reduce API calls
+
+    [shareLimits.iso]
+        ratio_limit = 2
+        seeding_time_limit = 1440
+        upload_speed_limit = 7500000
+        tags = 'ISO'
+
+    [shareLimits.default]
+        ratio_limit = 2
+        seeding_time_limit = 1440
+        upload_speed_limit = 7500000
+        tags = 'Default'
+
+#### Genre Specifications
+[genres]
+    [genres.gameupdates] #				the genre becomes the save path for qbittorrent (e.g. /mnt/local/downloads/qbittorent/completed/gameupdates)
+        moveToDir = '/mnt/local/Media/Game Updates' # 	leave as '' to not move completed downloads
+        keepDirStructure = true # 			false moves files to parent directory of category and deletes empty directories
+        keepSpecificFileTypes = ['*.mp4', '*.mkv'] # 	Patterns for files to keep from downloads, leave as '[]' to keep all. Python list format.
+        deleteFromClientWhenDone = false # 		Remove torrent from client when done seeding
+        scanPlex = false # 				Tell plex to scan libraries after moving files
+            [genres.bjj.rssRules]
+                enabled = true # 			Whether the rule is enabled
+                mustContain = '' # 			The substring that the torrent name must contain. This will include the --name flag from CLI
+                mustNotContain = 'x264|x265' # 		The substring that the torrent name must not contain
+                useRegex = false # 			Regex mode in "mustContain" and "mustNotContain"
+                episodeFilter = '' # 			Episode filter definition
+                smartFilter = true # 			Enable smart episode filter
+                previouslyMatchedEpisodes = '' # 	The list of episode IDs already matched by smart filter
+                affectedFeeds = ['http://tracker.rssfeed'] # Python list format of feeds to download from
+                ignoreDays = 1 # 			Ignore subsequent rule matches
+                lastMatch = '' # 			The rule last match time
+                addPaused = false # 			Add matched torrent in paused mode
+                assignedCategory = '' # 		Leave blank, category is assigned via the '--name' flag when you create a rule using the CLI 
+                savePath = '' # 			Leave this blank to let qbitmgr move downloads
+
+    [genres.iso]
+        moveToDir = '/mnt/local/Media/ISO Files'
+        keepDirStructure = false
+        keepSpecificFileTypes = ['*.iso']
+        deleteFromClientWhenDone = false
+        scanPlex = false
+            [genres.iso.rssRules]
+                enabled = true
+                mustContain = '1080p'
+                mustNotContain = ''
+                useRegex = false
+                episodeFilter = true
+                smartFilter = true
+                previouslyMatchedEpisodes = ''
+                affectedFeeds = ['http://tracker1.rssfeed', 'http://tracker2.rssfeed']
+                ignoreDays = 1
+                lastMatch = ''
+                addPaused = true
+                assignedCategory = ''
+                savePath = ''

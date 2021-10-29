@@ -113,3 +113,6 @@ venv.bak/
 
 # service files
 *.service
+
+# test files
+test*

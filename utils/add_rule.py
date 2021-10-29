@@ -33,8 +33,6 @@ class RSSRule:
         if self.name not in rules:
             client.rss.set_rule(rule_name=self.name, rule_def=self.specification)
             log.info(f'Rule created: {self.name}')
-            print(f'Rule created: {self.name}')
         else:
             log.info(f'Rule already exists: {self.name}')
-            print(f'Rule already exists: {self.name}')
 
