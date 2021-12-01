@@ -4,6 +4,7 @@ import toml
 import time
 import shutil
 import logging
+import subprocess
 from typing import Tuple
 from fnmatch import fnmatch, filter
 import qbittorrentapi
@@ -109,9 +110,15 @@ class CompletedDownload():
             fsobject = os.path.dirname(fsobject)
         return fsobject
 
+
     def plex_scan(self):
         time.sleep(5)
-        return BackgroundPopen(log.info, log.info, self.plex_command, bufsize=1)
+        s = subprocess.check_output(self.plex_command).strip().decode("UTF-8")
+        if "Got nothing for: It's All Connected" in s:
+            log.info(f"Plex scan succes, stdout: '{s}'")
+        else:
+            log.info(f"Plex scan failed, stdout: '{s}'")
+
 
     def check_copy_completed(self):
         files_to_copy_count = len(self.files_to_copy)

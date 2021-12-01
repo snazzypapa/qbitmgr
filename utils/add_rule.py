@@ -9,11 +9,11 @@ config = toml.load('utils/config.toml')
 class RSSRule:
 
     def __init__(self, name, download_type):
-        self.name = name
+        self.name = f"{download_type.upper()} - {name}"
         self.download_type = download_type
         self.specification = {
             'enabled': config['genres'][self.download_type]['rssRules']['enabled'],
-            'mustContain': self.name + " " + config['genres'][self.download_type]['rssRules']['mustContain'],
+            'mustContain': name + " " + config['genres'][self.download_type]['rssRules']['mustContain'],
             'mustNotContain': config['genres'][self.download_type]['rssRules']['mustNotContain'],
             'useRegex': config['genres'][self.download_type]['rssRules']['useRegex'],
             'episodeFilter': config['genres'][self.download_type]['rssRules']['episodeFilter'],
@@ -23,7 +23,7 @@ class RSSRule:
             'ignoreDays': config['genres'][self.download_type]['rssRules']['ignoreDays'],
             'lastMatch': config['genres'][self.download_type]['rssRules']['lastMatch'],
             'addPaused': config['genres'][self.download_type]['rssRules']['addPaused'],
-            'assignedCategory': self.name,
+            'assignedCategory': name,
             'savePath': config['genres'][self.download_type]['rssRules']['savePath']}
 
     def add_rule(self):

@@ -27,7 +27,7 @@ log_formatter = logging.Formatter(
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
-# Set schedule logger to ERROR
+# Set module logging to WARNING
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("qbittorrentapi").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -109,7 +109,7 @@ genres = list(config['genres'])
 parser = argparse.ArgumentParser(description='Create qbittorrent download categories and RSS auto download rules')
 parser.add_argument('--name', required=False, default='', help="Person's name")
 parser.add_argument('--genre', required=False, default='', choices=genres, help='Type of download ' + str(genres))
-parser.add_argument('cmd', default='', choices=['run', 'add-rule', 'add-cat', 'copy', 'set-limits'], help='Command to run')
+parser.add_argument('cmd', default='', choices=['run', 'add-rule', 'add-cat', 'copy', 'clean', 'set-limits'], help='Command to run')
 
 args = parser.parse_args()
 name = args.name
@@ -142,9 +142,11 @@ if __name__ == "__main__":
             category = AddCategory(name, download_type)
             category.add_category()
         elif cmd == 'copy':
-            log.info('User call to: copy and clean files')
+            log.info('User call to: copy files')
             copier = Copier()
             copier.copy_completes()
+        elif cmd == 'clean':
+            log.info('User call to: clean seeds')
             cleaner = Cleaner()
             cleaner.clean_seeds(120)
         elif cmd == 'set-limits':
