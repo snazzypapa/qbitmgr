@@ -1,33 +1,21 @@
-import qbittorrentapi
 import logging
-import toml
 
-log = logging.getLogger('set_limits')
-config = toml.load('utils/config.toml')
-
-client = qbittorrentapi.Client(host=config['host'], username=config['username'], password=config['password'])
+log = logging.getLogger("set_limits")
 
 
 class LimitGroup:
-
-    def __init__(self, group, names, hashes):
+    def __init__(self, config, group, names, hashes):
         self.group = group
         self.names = names
         self.hashes = hashes
-        self.ratio_limit = config['shareLimits'][self.group]['ratio_limit']
-        self.seeding_time_limit = config['shareLimits'][self.group]['seeding_time_limit']
-        self.upload_speed_limit = config['shareLimits'][self.group]['upload_speed_limit']
-        self.tags = config['shareLimits'][group]['tags']
-
-    def set_attributes(self):
-        client.torrents_set_share_limits(self.ratio_limit, self.seeding_time_limit, torrent_hashes=self.hashes)
-        client.torrents_set_upload_limit(self.upload_speed_limit, torrent_hashes=self.hashes)
-        client.torrents_add_tags(self.tags, torrent_hashes=self.hashes)
-        log.debug(f'Limit set to {self.group} for {self.names}')
-        if self.group != 'private':
-            return
-        client.torrents_top_priority(torrent_hashes=self.hashes)
-        log.debug(f'Moved private torrent to top of queue: {self.names}')
+        self.ratio_limit = config["shareLimits"][self.group]["ratio_limit"]
+        self.seeding_time_limit = config["shareLimits"][self.group][
+            "seeding_time_limit"
+        ]
+        self.upload_speed_limit = config["shareLimits"][self.group][
+            "upload_speed_limit"
+        ]
+        self.tags = config["shareLimits"][group]["tags"]
 
 
 def return_index_of_dict_in_list(lst, key, value):
@@ -37,29 +25,47 @@ def return_index_of_dict_in_list(lst, key, value):
     return -1
 
 
-class GroupAssignments:
+class ShareLimiter:
+    def __init__(self, config, qbitclient):
+        self.config = config
+        self.qbitclient = qbitclient
+        self.groups = list(config["shareLimits"])
 
-    def __init__(self):
-        self.groups = list(config['shareLimits'])
-
-    def assign_categories(self):
-        categories = [{'group': i, 'names': [], 'hashes': []} for i in self.groups]
-
-        for torrent in client.torrents_info(status_filter='downloading'):
-            if torrent.tags != '':
+    def assign_limit_groups(self):
+        categories = [{"group": i, "names": [], "hashes": []} for i in self.groups]
+        for torrent in self.qbitclient.torrents_info(status_filter="downloading"):
+            if torrent.tags != "":
                 continue
-            if torrent.trackers[0]['msg'] == 'This torrent is private':
-                index = return_index_of_dict_in_list(categories, 'group', 'private')
+            if torrent.trackers[0]["msg"] == "This torrent is private":
+                index = return_index_of_dict_in_list(categories, "group", "private")
             elif torrent.category in self.groups:
-                index = return_index_of_dict_in_list(categories, 'group', torrent.category)
+                index = return_index_of_dict_in_list(
+                    categories, "group", torrent.category
+                )
             else:
-                index = return_index_of_dict_in_list(categories, 'group', 'default')
-            categories[index]['hashes'].append(torrent.hash)
-            categories[index]['names'].append(torrent.name)
+                index = return_index_of_dict_in_list(categories, "group", "default")
+            categories[index]["hashes"].append(torrent.hash)
+            categories[index]["names"].append(torrent.name)
 
-        return [LimitGroup(**i) for i in categories if i['hashes']] # The double splat converts dict to keyword arguments
+        return [
+            LimitGroup(self.config, **i) for i in categories if i["hashes"]
+        ]  # The double splat converts dict to keyword arguments
 
-
-def set_limits():
-    handler = GroupAssignments()
-    [i.set_attributes() for i in handler.assign_categories()]
+    def set_limits(self):
+        for limit_group in self.assign_limit_groups():
+            self.qbitclient.torrents_set_share_limits(
+                limit_group.ratio_limit,
+                limit_group.seeding_time_limit,
+                torrent_hashes=limit_group.hashes,
+            )
+            self.qbitclient.torrents_set_upload_limit(
+                limit_group.upload_speed_limit, torrent_hashes=limit_group.hashes
+            )
+            self.qbitclient.torrents_add_tags(
+                limit_group.tags, torrent_hashes=limit_group.hashes
+            )
+            log.info(f"Limit set to {limit_group.group} for {limit_group.names}")
+            if self.group != "private":
+                return
+            self.qbitclient.torrents_top_priority(torrent_hashes=limit_group.hashes)
+            log.info(f"Moved private torrent to top of queue: {limit_group.names}")
