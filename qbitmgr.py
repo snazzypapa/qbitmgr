@@ -10,10 +10,10 @@ from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from utils.set_limits_v2 import ShareLimiter
+from utils.set_limits import ShareLimiter
 from utils.add_cat import AddCategory
 from utils.add_rule import RSSRule
-from utils.cleaner_v2 import Cleaner
+from utils.cleaner import Cleaner
 from utils.scheduler import Periodic
 from utils.plex_scanner import PlexScanner
 

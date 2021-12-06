@@ -16,7 +16,7 @@ Qbitmgr has 3 main functions:
 
 1. Automaticly set share limits for torrents in qbittorrent based on trackers and categories.
 
-2. Automatically manage files once completed: delete unwanted files by type and move files based on genre.
+2. Automatically manage files once completed: delete unwanted files by file extension and move files based on genre.
 
 3. Add templated RSS auto download rules and download categories from the command line.
 
@@ -102,15 +102,15 @@ qbitmgr
 ```
 
 ```
-usage: qbitmgr {add-cat,add-rule,move,set-limits} [--name] [--genre]
+usage: qbitmgr {"run", "add-cat", "add-rule", "clean", "set-limits"} [--name] [--genre]
                  
 positional arguments:
-  {add-cat,add-rule,move,set-limits,watch}
+  {"run", "add-cat", "add-rule", "clean", "set-limits"}
+                        "run": starts filesystem watcher for new and completed torrents
                         "add-cat": adds new category to qbittorrent and sets completed download directory to specified genre. Requires '--genre' and '--name' keyword arguments.
                         "add-rule": adds new categgory and new RSS auto download rule to qbittorrent and sets completed download directory to specified genre. Requires '--genre' and '--name' keyword arguments.
-                        "move":  deletes unwanted files and moves completed downloads from the qbittorrent downloads directory to whatever directory you prefer  
-                        "set-limits": sets share limits in qbittorrent via the qbittorrent API
-                        "watch": starts filesystem watcher for new and completed torrents
+                        "clean":  checks for completed seeds and deletes extra files and moves files as specified in config   
+                        "set-limits": sets share limits for torrents in qbittorrent via the qbittorrent API
 
 keyword arguments:
   -h, --help            Show this help message and exit
@@ -129,5 +129,3 @@ This is my first project and I want to credit a few other programmers for their 
 * Tomodoro for his simple but elegant solution for managing seed queues and uses some of the same tools as I used.  https://github.com/Tomodoro/qbitseedmgr
 * Countless stackoverflow users for their questions and answers. 
 
-
-  
