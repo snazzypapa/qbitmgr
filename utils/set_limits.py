@@ -65,7 +65,7 @@ class ShareLimiter:
                 limit_group.tags, torrent_hashes=limit_group.hashes
             )
             log.info(f"Limit set to {limit_group.group} for {limit_group.names}")
-            if self.group != "private":
-                return
+            if limit_group.group != "private":
+                continue
             self.qbitclient.torrents_top_priority(torrent_hashes=limit_group.hashes)
             log.info(f"Moved private torrent to top of queue: {limit_group.names}")

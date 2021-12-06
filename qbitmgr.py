@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import os
 import sys
 import toml
@@ -11,45 +10,49 @@ from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from utils.set_limits import ShareLimiter
+from utils.set_limits_v2 import ShareLimiter
 from utils.add_cat import AddCategory
 from utils.add_rule import RSSRule
-from utils.cleaner import Cleaner
+from utils.cleaner_v2 import Cleaner
 from utils.scheduler import Periodic
-from utils.copier import Copier
+from utils.plex_scanner import PlexScanner
 
 config = toml.load(os.path.join(os.path.dirname(__file__), "config.toml"))
+qbitclient = qbittorrentapi.Client(
+    host=config["host"],
+    username=config["username"],
+    password=config["password"],
+)
 
 ############################################################
 # LOGGING
 ############################################################
-log_formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)-10s - %(name)-15s - %(funcName)-20s - %(message)s"
-)
-root_logger = logging.getLogger()
-# root_logger.setLevel(logging.INFO)
+def get_logger(name):
+    log_formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)-10s - %(name)-15s - %(funcName)-20s - %(message)s"
+    )
+    root_logger = logging.getLogger()
 
-# Set module logging to WARNING
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("qbittorrentapi").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("watchdog").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("qbittorrentapi").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("watchdog").setLevel(logging.WARNING)
 
-# Set console logger
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setFormatter(log_formatter)
-root_logger.addHandler(console_handler)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(log_formatter)
+    root_logger.addHandler(console_handler)
 
-# Set file logger
-file_handler = RotatingFileHandler(
-    "qbitmgr.log", maxBytes=1024 * 1024 * 5, backupCount=5, encoding="utf-8"
-)
-file_handler.setFormatter(log_formatter)
-root_logger.addHandler(file_handler)
+    file_handler = RotatingFileHandler(
+        f"{name}.log", maxBytes=1024 * 1024 * 5, backupCount=5, encoding="utf-8"
+    )
+    file_handler.setFormatter(log_formatter)
+    root_logger.addHandler(file_handler)
 
-# Set chosen logging level
-root_logger.setLevel(config["logLevel"])
-log = root_logger.getChild("qbitmgr")
+    root_logger.setLevel(config["logLevel"])
+    return root_logger.getChild(name)
+
+
+log = get_logger("qbitmgr")
 
 ############################################################
 # WATCHDOG OBSERVER
@@ -62,14 +65,14 @@ def on_created(event):
 
 def on_deleted(event):
     time.sleep(10)
-    log.info("Download completed - copying files")
-    copier = Copier()
-    copier.copy_completes()
-
-    time.sleep(3)
-    log.info("Checking downloads directory for completed seeds")
-    cleaner = Cleaner()
+    log.info("Checking for completed seeds to process")
+    cleaner = Cleaner(config, qbitclient)
     cleaner.clean_seeds(0)
+
+    time.sleep(5)
+    log.info("Download completed - initiating plex library scan, if needed")
+    scanner = PlexScanner(config, qbitclient)
+    scanner.scan_if_needed()
 
 
 def run_observer():
@@ -99,7 +102,7 @@ def run_observer():
 # Completed Seed Cleaner
 ############################################################
 def run_cleaner(ignore_age):
-    cleaner = Cleaner()
+    cleaner = Cleaner(config, qbitclient)
     return cleaner.clean_seeds(ignore_age)
 
 
@@ -111,6 +114,12 @@ def get_args():
     parser = argparse.ArgumentParser(
         description="Create qbittorrent download categories and RSS auto download rules"
     )
+    parser.add_argument(
+        "cmd",
+        default="",
+        choices=["run", "add-cat", "add-rule", "clean", "set-limits"],
+        help="Command to run",
+    )
     parser.add_argument("--name", required=False, default="", help="Person's name")
     parser.add_argument(
         "--genre",
@@ -119,12 +128,6 @@ def get_args():
         choices=genres,
         help="Type of download " + str(genres),
     )
-    parser.add_argument(
-        "cmd",
-        default="",
-        choices=["run", "add-rule", "add-cat", "copy", "clean", "set-limits"],
-        help="Command to run",
-    )
 
     return parser.parse_args()
 
@@ -132,16 +135,9 @@ def get_args():
 ############################################################
 # Main
 ############################################################
-if __name__ == "__main__":
-
-    # Run chosen mode
+def main():
     try:
         args = get_args()
-        qbitclient = qbittorrentapi.Client(
-            host=config["host"],
-            username=config["username"],
-            password=config["password"],
-        )
         if args.cmd == "run":
             observer_thread = threading.Thread(target=run_observer, args=())
             observer_thread.daemon = False
@@ -163,10 +159,6 @@ if __name__ == "__main__":
             log.info("User call to: add new category")
             category = AddCategory(config, qbitclient, args.name, args.genre)
             category.add_category()
-        elif args.cmd == "copy":
-            log.info("User call to: copy files")
-            copier = Copier(config, qbitclient)
-            copier.copy_completes()
         elif args.cmd == "clean":
             log.info("User call to: clean seeds")
             cleaner = Cleaner(config, qbitclient)
@@ -177,11 +169,14 @@ if __name__ == "__main__":
             share_limiter.set_limits()
         else:
             print(
-                "Command not recognized or incorrect flags given. Choose 'run,' 'copy,' or 'set-limits' with no flags or "
+                "Command not recognized or incorrect flags given. Choose 'run' or 'set-limits' with no flags or "
                 "'add-rule'/'add-cat' with --genre and --name"
             )
     except KeyboardInterrupt:
-        scheduled_cleaner.stop()
         log.info("Qbitmgr was interrupted by Ctrl + C")
     except Exception:
         log.exception("Unexpected fatal exception occurred: ")
+
+
+if __name__ == "__main__":
+    main()

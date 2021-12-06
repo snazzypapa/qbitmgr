@@ -72,15 +72,16 @@ Qbitmgr has 3 main functions:
    sudo ln -s /opt/qbitmgr/qbitmgr.py /usr/local/bin/qbitmgr
    ```
 
-1. Edit the config file example saved in /utils.
+1. Rename the config file and edit it.
 
    ```
-   nano utils/config.toml
+   mv config.toml.exmaple config.toml && nano config.toml
    ```
 
 1. To have Qbitmgr run automatically do the following:
 
    ```
+   mv /opt/qbitmgr/systemd/qbitmgr_watcher.service.example /opt/qbitmgr/systemd/qbitmgr_watcher.service 
    sudo cp /opt/qbitmgr/systemd/qbitmgr_watcher.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable qbitmgr_watcher.service
