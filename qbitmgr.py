@@ -150,21 +150,21 @@ def main():
                 config["cleanerInterval"] * 60, run_cleaner, 120
             )
         elif args.cmd == "add-rule":
-            log.info("User call to: add new RSS auto downloading rule")
+            log.debug("User call to: add new RSS auto downloading rule")
             category = AddCategory(config, qbitclient, args.name, args.genre)
             category.add_category()
             rule = RSSRule(config, qbitclient, args.name, args.genre)
             rule.add_rule()
         elif args.cmd == "add-cat":
-            log.info("User call to: add new category")
+            log.debug("User call to: add new category")
             category = AddCategory(config, qbitclient, args.name, args.genre)
             category.add_category()
         elif args.cmd == "clean":
-            log.info("User call to: clean seeds")
+            log.debug("User call to: clean seeds")
             cleaner = Cleaner(config, qbitclient)
             cleaner.clean_seeds(120)
         elif args.cmd == "set-limits":
-            log.info("User call to: set limits")
+            log.debug("User call to: set limits")
             share_limiter = ShareLimiter(config, qbitclient)
             share_limiter.set_limits()
         else:
