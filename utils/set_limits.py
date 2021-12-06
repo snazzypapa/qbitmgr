@@ -1,6 +1,6 @@
 import logging
 
-log = logging.getLogger("set_limits_v2")
+log = logging.getLogger("set_limits")
 
 
 class LimitGroup:

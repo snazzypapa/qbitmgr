@@ -64,7 +64,7 @@ def on_created(event):
 
 
 def on_deleted(event):
-    time.sleep(10)
+    time.sleep(20)
     log.info("Checking for completed seeds to process")
     cleaner = Cleaner(config, qbitclient)
     cleaner.clean_seeds(0)
