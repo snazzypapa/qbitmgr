@@ -20,7 +20,6 @@ class CompletedSeed:
         completion_on,
         genre,
     ):
-        self.config = config
         self.qbitclient = qbitclient
         self.name = name
         self.hash = hash
@@ -28,14 +27,9 @@ class CompletedSeed:
         self.save_path = os.path.normpath(save_path)  # path to category
         self.category = category
         self.time_complete = self.elapsed_seconds(completion_on)
-        self.genre = genre
-        self.keep_dir_structure = self.config["genres"][self.genre]["keepDirStructure"]
-        self.delete_from_client = config["genres"][self.genre][
-            "deleteFromClientWhenDone"
-        ]
-        self.file_exts_to_keep = tuple(
-            self.config["genres"][self.genre]["keepSpecificFileTypes"]
-        )
+        self.keep_dir_structure = config["genres"][genre]["keepDirStructure"]
+        self.delete_from_client = config["genres"][genre]["deleteFromClientWhenDone"]
+        self.file_exts_to_keep = tuple(config["genres"][genre]["keepSpecificFileTypes"])
 
     @staticmethod
     def elapsed_seconds(given_time_since_epoch):
@@ -162,9 +156,7 @@ class Cleaner:
             ]:
                 if i.time_complete < ignore_age:
                     continue
-                if i.config["genres"][i.genre][
-                    "keepSpecificFileTypes"
-                ] and os.path.isdir(i.content_path):
+                if i.file_exts_to_keep and os.path.isdir(i.content_path):
                     i.delete_non_filetype_recursively(
                         i.content_path, i.file_exts_to_keep
                     )

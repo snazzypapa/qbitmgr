@@ -4,45 +4,25 @@ log = logging.getLogger("add_rule")
 
 
 class RSSRule:
-    def __init__(self, config, qbitclient, name, download_type):
-        self.config = config
+    def __init__(self, config, qbitclient, name, genre):
         self.qbitclient = qbitclient
-        self.name = f"{download_type.upper()} - {name}"
-        self.download_type = download_type
+        self.name = f"{genre.upper()} - {name}"
         self.specification = {
-            "enabled": self.config["genres"][self.download_type]["rssRules"]["enabled"],
-            "mustContain": f"{name} {self.config['genres'][self.download_type]['rssRules']['mustContain']}",
-            "mustNotContain": self.config["genres"][self.download_type]["rssRules"][
-                "mustNotContain"
+            "enabled": config["genres"][genre]["rssRules"]["enabled"],
+            "mustContain": f"{name} {config['genres'][genre]['rssRules']['mustContain']}",
+            "mustNotContain": config["genres"][genre]["rssRules"]["mustNotContain"],
+            "useRegex": config["genres"][genre]["rssRules"]["useRegex"],
+            "episodeFilter": config["genres"][genre]["rssRules"]["episodeFilter"],
+            "smartFilter": config["genres"][genre]["rssRules"]["smartFilter"],
+            "previouslyMatchedEpisodes": config["genres"][genre]["rssRules"][
+                "previouslyMatchedEpisodes"
             ],
-            "useRegex": self.config["genres"][self.download_type]["rssRules"][
-                "useRegex"
-            ],
-            "episodeFilter": self.config["genres"][self.download_type]["rssRules"][
-                "episodeFilter"
-            ],
-            "smartFilter": self.config["genres"][self.download_type]["rssRules"][
-                "smartFilter"
-            ],
-            "previouslyMatchedEpisodes": self.config["genres"][self.download_type][
-                "rssRules"
-            ]["previouslyMatchedEpisodes"],
-            "affectedFeeds": self.config["genres"][self.download_type]["rssRules"][
-                "affectedFeeds"
-            ],
-            "ignoreDays": self.config["genres"][self.download_type]["rssRules"][
-                "ignoreDays"
-            ],
-            "lastMatch": self.config["genres"][self.download_type]["rssRules"][
-                "lastMatch"
-            ],
-            "addPaused": self.config["genres"][self.download_type]["rssRules"][
-                "addPaused"
-            ],
-            "assignedCategory": name,
-            "savePath": self.config["genres"][self.download_type]["rssRules"][
-                "savePath"
-            ],
+            "affectedFeeds": config["genres"][genre]["rssRules"]["affectedFeeds"],
+            "ignoreDays": config["genres"][genre]["rssRules"]["ignoreDays"],
+            "lastMatch": config["genres"][genre]["rssRules"]["lastMatch"],
+            "addPaused": config["genres"][genre]["rssRules"]["addPaused"],
+            "assignedCategory": self.name,
+            "savePath": config["genres"][genre]["rssRules"]["savePath"],
         }
 
     def add_rule(self):
