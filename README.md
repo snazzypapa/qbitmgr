@@ -14,20 +14,20 @@ Supports qBittorrent v4.1.0+ (i.e. Web API v2.0+). Currently supports up to qBit
 
 Qbitmgr has 3 main functions:
 
-1. Automaticly set share limits for torrents in qbittorrent based on trackers and categories.
+1. Automaticly set upload speed and seeding limits for torrents in qbittorrent based on trackers and categories.
 
-2. Automatically manage files once completed: delete unwanted files by file extension and move files based on genre.
+2. Automatically manage files once completed: delete unwanted files by file extension and move files based on genre/category.
 
 3. Add templated RSS auto download rules and download categories from the command line.
 
 
 # Requirements
 
-1. Ubuntu/Debian OS (could work in other OSes with some tweaks).
+1. Ubuntu/Debian OS (likely works woth other OSes but have not tried).
 
 2. Qbittorrent with WebUI accessible on localhost
 
-3. Automatic download handling turned on in qbittorrent with an incomplete directory and a completed directory. It does not matter what these are named as long as you know their paths. 
+3. Automatic download handling turned on, torrent content layout set to create subfolder, and an incomplete downloads directory set in qbittorrent preferences. 
 
 4. Python 3.6 or higher (`sudo apt install python3 python3-pip`).
 
@@ -66,16 +66,10 @@ Qbitmgr has 3 main functions:
    sudo python3 -m pip install -r requirements.txt
    ```
 
-1. Create a shortcut for Qbitmgr.
-
-   ```
-   sudo ln -s /opt/qbitmgr/qbitmgr.py /usr/local/bin/qbitmgr
-   ```
-
 1. Rename the config file and edit it.
 
    ```
-   mv config.toml.exmaple config.toml && nano config.toml
+   mv config.toml.example config.toml && nano config.toml
    ```
 
 1. To have Qbitmgr run automatically do the following:
