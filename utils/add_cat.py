@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 log = logging.getLogger("add_cat")
 
@@ -8,7 +8,7 @@ class AddCategory:
     def __init__(self, config, qbitclient, name, genre):
         self.qbitclient = qbitclient
         self.name = f"{genre.upper()} - {name}"
-        self.save_path = os.path.join(config["genres"][genre]["moveToDir"], name)
+        self.save_path = Path(config["genres"][genre]["moveToDir"], name)
 
     def add_category(self):
         categories = self.qbitclient.torrents_categories()

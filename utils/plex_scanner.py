@@ -1,6 +1,6 @@
-import os
 import logging
 import subprocess
+from pathlib import Path
 
 log = logging.getLogger("plex_scanner")
 
@@ -20,10 +20,15 @@ class PlexScanner:
         ]
 
     def get_genre(self, save_path):
-        """ """
-        genre_path = os.path.dirname(save_path)
+        """gets genre of torrent
+        Args:
+            save_path: torrent save_path
+        Returns:
+            genre from config or False
+        """
+        genre_path = Path(save_path).parent
         for key, val in self.config["genres"].items():
-            if val["moveToDir"] == genre_path:
+            if Path(val["moveToDir"]) == genre_path:
                 return key
         return False
 

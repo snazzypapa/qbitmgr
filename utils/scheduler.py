@@ -1,7 +1,7 @@
 from threading import Timer, Lock
 
 
-class Periodic(): # https://stackoverflow.com/a/18906292/16625038
+class Periodic:  # https://stackoverflow.com/a/18906292/16625038
     """
     A periodic task running in threading.Timers
     """
@@ -14,7 +14,7 @@ class Periodic(): # https://stackoverflow.com/a/18906292/16625038
         self.args = args
         self.kwargs = kwargs
         self._stopped = True
-        if kwargs.pop('autostart', True):
+        if kwargs.pop("autostart", True):
             self.start()
 
     def start(self, from_run=False):

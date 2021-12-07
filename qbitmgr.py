@@ -1,4 +1,3 @@
-import os
 import sys
 import toml
 import time
@@ -6,6 +5,7 @@ import argparse
 import threading
 import logging
 import qbittorrentapi
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -17,7 +17,7 @@ from utils.cleaner import Cleaner
 from utils.scheduler import Periodic
 from utils.plex_scanner import PlexScanner
 
-config = toml.load(os.path.join(os.path.dirname(__file__), "config.toml"))
+config = toml.load(Path(Path(__file__).parent, "config.toml"))
 qbitclient = qbittorrentapi.Client(
     host=config["host"],
     username=config["username"],
@@ -169,7 +169,7 @@ def main():
             share_limiter.set_limits()
         else:
             print(
-                "Command not recognized or incorrect flags given. Choose 'run' or 'set-limits' with no flags or "
+                "Command not recognized or incorrect flags given. Choose 'run,' 'clean,' or 'set-limits' with no flags or "
                 "'add-rule'/'add-cat' with --genre and --name"
             )
     except KeyboardInterrupt:

@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import logging
+from pathlib import Path
 from typing import Tuple
 
 log = logging.getLogger("cleaner")
@@ -23,8 +24,10 @@ class CompletedSeed:
         self.qbitclient = qbitclient
         self.name = name
         self.hash = hash
-        self.content_path = content_path  # path of torrent content (root path for multifile torrents, absolute file path for singlefile torrents)
-        self.save_path = os.path.normpath(save_path)  # path to category
+        self.content_path = Path(
+            content_path
+        )  # path of torrent content (root path for multifile torrents, absolute file path for singlefile torrents)
+        self.save_path = Path(save_path)  # path to category
         self.category = category
         self.time_complete = self.elapsed_seconds(completion_on)
         self.keep_dir_structure = config["genres"][genre]["keepDirStructure"]
@@ -49,10 +52,7 @@ class CompletedSeed:
         """
         for root, dirs, files in os.walk(dir_path, topdown=False):
             [
-                (
-                    os.remove(os.path.join(root, file)),
-                    (log.debug(f"Deleted file: {file}")),
-                )
+                (Path(root, file).unlink(), log.debug(f"Deleted file: {file}"))
                 for file in files
                 if not file.endswith(keep_extensions)
             ]
@@ -67,12 +67,9 @@ class CompletedSeed:
         """
         for root, dirs, files in os.walk(dir_path, topdown=False):
             [
-                (
-                    os.rmdir(os.path.join(root, dir)),
-                    (log.debug(f"Deleted empty directory: {dir}")),
-                )
+                (Path(root, dir).rmdir(), log.debug(f"Deleted empty directory: {dir}"))
                 for dir in dirs
-                if not os.listdir(os.path.join(root, dir))
+                if not any(Path(root, dir).iterdir())
             ]
 
     @staticmethod
@@ -87,7 +84,7 @@ class CompletedSeed:
         for root, dirs, files in os.walk(source_dir, topdown=False):
             [
                 (
-                    shutil.move(os.path.join(root, file), dest_dir),
+                    shutil.move(Path(root, file), dest_dir),
                     log.debug(f"Moved file: {file}"),
                 )
                 for file in files
@@ -111,6 +108,26 @@ class CompletedSeed:
             )
             log.debug(f"Added 'Processed' tag for {self.name}")
 
+    def process_completed_seed(self, ignore_age):
+        if self.time_complete < ignore_age:
+            return
+        if self.file_exts_to_keep and self.content_path.is_dir():
+            self.delete_non_filetype_recursively(
+                self.content_path, self.file_exts_to_keep
+            )
+        if not self.keep_dir_structure:
+            if self.content_path.is_dir():
+                self.move_all_files_in_tree_to_another_dir(
+                    self.content_path, self.save_path
+                )
+                self.content_path.rmdir()
+                log.debug(f"Deleted dir: {self.content_path}")
+            if self.content_path.is_file():
+                self.move_single_file(self.content_path, self.save_path)
+                self.content_path.parent.rmdir()
+                log.debug(f"Deleted dir for: {self.content_path}")
+        self.delete_in_client()
+
 
 class Cleaner:
     def __init__(self, config, qbitclient):
@@ -129,10 +146,15 @@ class Cleaner:
         ]
 
     def get_genre(self, save_path):
-        """ """
-        genre_path = os.path.dirname(save_path)
+        """gets genre of torrent
+        Args:
+            save_path: torrent save_path
+        Returns:
+            genre from config or False
+        """
+        genre_path = Path(save_path).parent
         for key, val in self.config["genres"].items():
-            if val["moveToDir"] == genre_path:
+            if Path(val["moveToDir"]) == genre_path:
                 return key
         return False
 
@@ -154,18 +176,4 @@ class Cleaner:
                 )
                 for i in self.get_completed_seeds()
             ]:
-                if i.time_complete < ignore_age:
-                    continue
-                if i.file_exts_to_keep and os.path.isdir(i.content_path):
-                    i.delete_non_filetype_recursively(
-                        i.content_path, i.file_exts_to_keep
-                    )
-                if not i.keep_dir_structure:
-                    if os.path.isdir(i.content_path):
-                        i.move_all_files_in_tree_to_another_dir(
-                            i.content_path, i.save_path
-                        )
-                    if os.path.isfile(i.content_path):
-                        i.move_single_file(i.content_path, i.save_path)
-                    i.delete_empty_dirs_recursively(i.save_path)
-                i.delete_in_client()
+                i.process_completed_seed(ignore_age)
