@@ -5,12 +5,17 @@ log = logging.getLogger("add_cat")
 
 
 class AddCategory:
+    """creates new category with save path based on config
+    category names include the genre
+    """
+
     def __init__(self, config, qbitclient, name, genre):
         self.qbitclient = qbitclient
         self.name = f"{genre.upper()} - {name}"
         self.save_path = Path(config["genres"][genre]["moveToDir"], name)
 
     def add_category(self):
+        """adds download category"""
         categories = self.qbitclient.torrents_categories()
         if self.name not in categories:
             self.qbitclient.torrent_categories.create_category(

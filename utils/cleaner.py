@@ -9,6 +9,14 @@ log = logging.getLogger("cleaner")
 
 
 class CompletedSeed:
+    """
+    Object representing a download that has completed seeding
+    determines if any post-processing of files is required and executes steps including:
+        1. deleting unwanted files by file extension
+        2. removing the directory structure of the download to put
+            all files in one directory for the category
+    """
+
     def __init__(
         self,
         config,
@@ -130,6 +138,10 @@ class CompletedSeed:
 
 
 class Cleaner:
+    """
+    reviews completed seeds for post-processing steps and creates CompletedSeed objects
+    """
+
     def __init__(self, config, qbitclient):
         self.config = config
         self.qbitclient = qbitclient

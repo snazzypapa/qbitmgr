@@ -4,6 +4,8 @@ log = logging.getLogger("add_rule")
 
 
 class RSSRule:
+    """creates new RSS auto downloading rule based on config"""
+
     def __init__(self, config, qbitclient, name, genre):
         self.qbitclient = qbitclient
         self.name = f"{genre.upper()} - {name}"
@@ -26,6 +28,7 @@ class RSSRule:
         }
 
     def add_rule(self):
+        """adds rule to qbittorrent if it does not already exist"""
         existing_rules = self.qbitclient.rss_rules()
         if self.name not in existing_rules:
             self.qbitclient.rss.set_rule(

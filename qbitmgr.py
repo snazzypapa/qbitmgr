@@ -28,6 +28,12 @@ qbitclient = qbittorrentapi.Client(
 # LOGGING
 ############################################################
 def get_logger(name):
+    """returns logger object
+    Args:
+        name: name of primary module
+    Returns:
+        child logger of given name
+    """
     log_formatter = logging.Formatter(
         "%(asctime)s - %(levelname)-10s - %(name)-15s - %(funcName)-20s - %(message)s"
     )
@@ -58,12 +64,20 @@ log = get_logger("qbitmgr")
 # WATCHDOG OBSERVER
 ############################################################
 def on_created(event):
+    """funcation to perfom when a new file/directory
+    is created in the incomplete downloads directory
+    presumably when a download starts
+    """
     log.info("New incomplete download - setting limits")
     share_limiter = ShareLimiter(config, qbitclient)
     share_limiter.set_limits()
 
 
 def on_deleted(event):
+    """funcation to perfom when file/directory
+    is deleted in the incomplete downloads directory
+    presumably when a download finishes
+    """
     time.sleep(20)
     log.info("Checking for completed seeds to process")
     cleaner = Cleaner(config, qbitclient)
@@ -76,6 +90,9 @@ def on_deleted(event):
 
 
 def run_observer():
+    """function to run the directory observer
+    to monitor for filesystem changes
+    """
     event_handler = FileSystemEventHandler()
 
     # Calling functions
@@ -102,6 +119,7 @@ def run_observer():
 # Completed Seed Cleaner
 ############################################################
 def run_cleaner(ignore_age):
+    """function to clean seeds"""
     cleaner = Cleaner(config, qbitclient)
     return cleaner.clean_seeds(ignore_age)
 
@@ -110,6 +128,9 @@ def run_cleaner(ignore_age):
 # Argument Parsing
 ############################################################
 def get_args():
+    """parse cli arguments
+    Returns: args object
+    """
     genres = list(config["genres"])
     parser = argparse.ArgumentParser(
         description="Create qbittorrent download categories and RSS auto download rules"
@@ -174,8 +195,8 @@ def main():
             )
     except KeyboardInterrupt:
         log.info("Qbitmgr was interrupted by Ctrl + C")
-    except Exception:
-        log.exception("Unexpected fatal exception occurred: ")
+    except Exception as e:
+        log.exception(f"Unexpected fatal exception occurred: {e}")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,11 @@ log = logging.getLogger("plex_scanner")
 
 
 class PlexScanner:
+    """
+    determines if plex should scan its libraries after a new download is completed
+    and issues plex scan command
+    """
+
     def __init__(self, config, qbitclient):
         self.config = config
         self.qbitclient = qbitclient

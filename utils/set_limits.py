@@ -4,6 +4,8 @@ log = logging.getLogger("set_limits")
 
 
 class LimitGroup:
+    """group of torrents that share limits specified in config. Sets share limits and order in qbittorrent queue."""
+
     def __init__(self, config, qbitclient, group, names, hashes):
         self.group = group
         self.qbitclient = qbitclient
@@ -37,6 +39,8 @@ class LimitGroup:
 
 
 class ShareLimiter:
+    """matches downloading torrents to limit groups in config and creates LimitGroup objects"""
+
     def __init__(self, config, qbitclient):
         self.config = config
         self.qbitclient = qbitclient
