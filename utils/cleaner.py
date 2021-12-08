@@ -25,7 +25,6 @@ class CompletedSeed:
         hash,
         content_path,
         save_path,
-        category,
         completion_on,
         genre,
     ):
@@ -36,7 +35,6 @@ class CompletedSeed:
             content_path
         )  # path of torrent content (root path for multifile torrents, absolute file path for singlefile torrents)
         self.save_path = Path(save_path)  # path to category
-        self.category = category
         self.time_complete = self.elapsed_seconds(completion_on)
         self.keep_dir_structure = config["genres"][genre]["keepDirStructure"]
         self.delete_from_client = config["genres"][genre]["deleteFromClientWhenDone"]
@@ -182,7 +180,6 @@ class Cleaner:
                     i.hash,
                     i.content_path,
                     i.save_path,
-                    i.category,
                     i.completion_on,
                     self.get_genre(i.save_path),
                 )

@@ -7,21 +7,21 @@ username = 'username'       # username for webui. String
 password = 'password123'    # password for webui. String
 
 #### File Movers
-incompleteDownloadsDir = '/mnt/downloads/qbittorrent/incoming'                                          # Full path without trailing slash. String
-completeDownloadsDir = '/mnt/downloads/qbittorrent/completed'                                           # Full path without trailing slash. String
-plexScanCommand = ['docker', 'exec', 'plex', '/usr/lib/plexmediaserver/Plex Media Scanner', '--scan']   # Python list format with arguments. This is the one for docker on linux.
-cleanerInterval = 10                                                                                    # Minutes between checking for completed seeds. Integer
+incompleteDownloadsDir = '/mnt/downloads/qbittorrent/incoming'                                          # full path without trailing slash. String
+completeDownloadsDir = '/mnt/downloads/qbittorrent/completed'                                           # full path without trailing slash. String
+plexScanCommand = ['docker', 'exec', 'plex', '/usr/lib/plexmediaserver/Plex Media Scanner', '--scan']   # command separated into components. This is the one for docker on linux. Python list
+cleanerInterval = 10                                                                                    # minutes between checking for completed seeds. Integer
 
 #### Share Limits
-[shareLimits]                                                       # create as many of share limit groups as you please
+[shareLimits]                                                       # create as many limit groups as you please
     [shareLimits.private]                                           # rename 'private' to whatever you prefer
         priorityInQueue = true                                      # move matching torrents to top of queue. Lowercase boolean
-        trackers = ['bee-bob-tracker.com', 'bee-bo-tracker.com']    # python list format of URLs of trackers. Can be left blank: []
-        categories = []                                             # python list format of categories. Can be left blank: []
+        trackers = ['bee-bob-tracker.com', 'bee-bo-tracker.com']    # URLs of trackers. Can be left blank: []. Python list
+        categories = []                                             # categories that fall into group. Can be left blank: []. Python list
         ratio_limit = -1                                            # ratio_limit – max ratio to seed a torrent. (-2 means use the global value and -1 is no limit). Integer
-        seeding_time_limit = 4320                                   # seeding_time_limit – minutes (-2 means use the global value and -1 is no limit). Integer
-        upload_speed_limit = -1                                     # upload_speed_limit – bytes/second (-1 sets the limit to infinity). Integer
-        tags = 'Private'                                            # tag to add to the download. This is not 100% necessary but it is recommended to include a tag to reduce API calls. String
+        seeding_time_limit = 4320                                   # minutes (-2 means use the global value and -1 is no limit). Integer
+        upload_speed_limit = -1                                     # bytes/second (-1 sets the limit to infinity). Integer
+        tags = 'Private'                                            # tag to add to the download. This is not 100% necessary but it is highly recommended to include a tag to reduce API calls. String
 
     [shareLimits.iso]
         priorityInQueue = true
@@ -32,7 +32,7 @@ cleanerInterval = 10                                                            
         upload_speed_limit = 7500000
         tags = 'ISO'
 
-    [shareLimits.default]                                           # it is best practice to keep a default sharelimit group here
+    [shareLimits.default]                                           # always use a default sharelimit group here. do not change the name
         priorityInQueue = true 
         trackers = [] # Leave blank for default
         categories = [] # Leave blank for default
@@ -49,7 +49,7 @@ cleanerInterval = 10                                                            
         keepSpecificFileTypes = ['.mp4', '.mkv']            # python list format of file extensions to keep from downloads, leave as '[]' to keep all. Python list format.
         deleteFromClientWhenDone = false                    # remove torrent from client when done seeding
         scanPlex = false                                    # tell plex to scan libraries upon download completion
-            [genres.gameupdates.rssRules]                   # update 'gameupdates' to your genre
+            [genres.gameupdates.rssRules]                   # update 'gameupdates' to your genre name
                 enabled = true                              # whether the rule is enabled. Boolean
                 mustContain = ''                            # the substring that the torrent name must contain. This will include the --name flag from CLI. String
                 mustNotContain = 'x264|x265'                # the substring that the torrent name must not contain. String
@@ -57,12 +57,12 @@ cleanerInterval = 10                                                            
                 episodeFilter = ''                          # episode filter definition
                 smartFilter = true                          # enable smart episode filter. Boolean
                 previouslyMatchedEpisodes = ''              # the list of episode IDs already matched by smart filter
-                affectedFeeds = ['http://tracker.rssfeed']  # python list format of feeds to download from
+                affectedFeeds = ['http://tracker.rssfeed']  # feeds to download from. Python list
                 ignoreDays = 1                              # ignore subsequent rule matches. Integer
-                lastMatch = ''                              # The rule last match time
-                addPaused = false                           # Add matched torrent in paused mode. Boolean
-                assignedCategory = ''                       # Leave blank, category is assigned via the '--name' flag when you create a rule using the CLI 
-                savePath = ''                               # Leave this blank. Save path is set by category
+                lastMatch = ''                              # the rule last match time
+                addPaused = false                           # add matched torrent in paused mode. Boolean
+                assignedCategory = ''                       # leave blank, category is assigned via the '--name' flag when you create a rule using the CLI 
+                savePath = ''                               # save path is set by category so leave this blank unless you want something different
 
     [genres.iso]
         moveToDir = '/mnt/local/Media/ISO Files'
