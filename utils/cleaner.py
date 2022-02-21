@@ -1,11 +1,10 @@
-import os
-import time
-import shutil
 import logging
+import os
+import shutil
+import time
 from pathlib import Path
-from typing import Tuple
 
-log = logging.getLogger("cleaner")
+log = logging.getLogger(__name__)
 
 
 class CompletedSeed:
@@ -33,8 +32,8 @@ class CompletedSeed:
         self.hash = hash
         self.content_path = Path(
             content_path
-        )  # path of torrent content (root path for multifile torrents, absolute file path for singlefile torrents)
-        self.save_path = Path(save_path)  # path to category
+        )  # path of torrent content (root path for multi-file torrents, absolute file path for single-file torrents)
+        self.save_path = Path(save_path)
         self.time_complete = self.elapsed_seconds(completion_on)
         self.keep_dir_structure = config["genres"][genre]["keepDirStructure"]
         self.delete_from_client = config["genres"][genre]["deleteFromClientWhenDone"]
@@ -48,7 +47,7 @@ class CompletedSeed:
         return time.time() - given_time_since_epoch
 
     @staticmethod
-    def delete_non_filetype_recursively(dir_path, keep_extensions: Tuple):
+    def delete_non_filetype_recursively(dir_path, keep_extensions: tuple):
         """deletes all files that do not have matching extension(s)
         Args:
             dir_path: path to directory to delete files from
@@ -98,6 +97,13 @@ class CompletedSeed:
 
     @staticmethod
     def move_single_file(source, dest):
+        """moves single file from source to destination
+        Args:
+            source: source path
+            dest: destination path
+        Returns:
+            None
+        """
         shutil.move(source, dest)
         log.debug(f"Moved file: {source}")
 
@@ -115,6 +121,13 @@ class CompletedSeed:
             log.debug(f"Added 'Processed' tag for {self.name}")
 
     def process_completed_seed(self, ignore_age):
+        """performs class functions based on config.
+        ignores downloads older than specified time to avoid race conditions with periodic cleaner
+        Args:
+            ignore_age: time in seconds since download completion to ignore
+        Returns:
+            None
+        """
         if self.time_complete < ignore_age:
             return
         if self.file_exts_to_keep and self.content_path.is_dir():
@@ -145,6 +158,12 @@ class Cleaner:
         self.qbitclient = qbitclient
 
     def get_completed_seeds(self):
+        """returns list of torrents that are done seeding
+        Args:
+            None
+        Returns:
+            list of completed seeds
+        """
         completed_list = self.qbitclient.torrents_info(status_filter="completed")
         seeding_list = self.qbitclient.torrents_info(status_filter="seeding")
         return [
@@ -169,6 +188,7 @@ class Cleaner:
         return False
 
     def clean_seeds(self, ignore_age=120):
+        """creates objects and tells them to process themselves"""
         if not self.get_completed_seeds():
             log.info("No completed seeds to clean")
         else:

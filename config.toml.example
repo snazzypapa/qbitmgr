@@ -1,5 +1,6 @@
 #### App Details
 logLevel = 'INFO' # Always all uppercase
+checkInterval = 1 # Minutes between checking for new downloads and completed seeds
 
 #### Qbittorrent WebUI Login Details
 host = 'localhost:8080'     # web address and port of qbittorrent webui. String

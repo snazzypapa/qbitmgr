@@ -96,20 +96,20 @@ qbitmgr
 ```
 
 ```
-usage: qbitmgr {"run", "add-cat", "add-rule", "clean", "set-limits"} [--name] [--genre]
+usage: qbitmgr {"run", "add-cat", "add-rule", "clean", "set-limits"} [-name] [-genre]
                  
 positional arguments:
   {"run", "add-cat", "add-rule", "clean", "set-limits"}
                         "run": starts filesystem watcher for new and completed torrents
-                        "add-cat": adds new category to qbittorrent and sets completed download directory to specified genre. Requires '--genre' and '--name' keyword arguments.
-                        "add-rule": adds new categgory and new RSS auto download rule to qbittorrent and sets completed download directory to specified genre. Requires '--genre' and '--name' keyword arguments.
+                        "add-cat": adds new category to qbittorrent and sets completed download directory to specified genre. Requires '-genre' and '-name' keyword arguments.
+                        "add-rule": adds new categgory and new RSS auto download rule to qbittorrent and sets completed download directory to specified genre. Requires '-genre' and '-name' keyword arguments.
                         "clean":  checks for completed seeds and deletes extra files and moves files as specified in config   
                         "set-limits": sets share limits for torrents in qbittorrent via the qbittorrent API
 
 keyword arguments:
   -h, --help            Show this help message and exit
-  --name                Name of new category and/or rule. This name is included in the 'must contain' in new RSS rules 
-  --genre               Specifies the completed download subdirectory and which template to use for the auto downloading rule 
+  -name                Name of new category and/or rule. This name is included in the 'must contain' in new RSS rules 
+  -genre               Specifies the completed download subdirectory and which template to use for the auto downloading rule 
 ```
 
 

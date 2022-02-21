@@ -1,6 +1,6 @@
 import logging
 
-log = logging.getLogger("add_rule")
+log = logging.getLogger(__name__)
 
 
 class RSSRule:

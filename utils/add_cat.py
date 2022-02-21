@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-log = logging.getLogger("add_cat")
+log = logging.getLogger(__name__)
 
 
 class AddCategory:

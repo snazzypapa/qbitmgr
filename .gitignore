@@ -116,3 +116,6 @@ venv.bak/
 
 # test files
 test*
+
+# logs
+logs/

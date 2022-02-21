@@ -1,137 +1,51 @@
-import sys
-import toml
-import time
 import argparse
-import threading
 import logging
-import qbittorrentapi
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from logging.handlers import RotatingFileHandler
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 
-from utils.set_limits import ShareLimiter
+import qbittorrentapi
+import toml
+
 from utils.add_cat import AddCategory
 from utils.add_rule import RSSRule
 from utils.cleaner import Cleaner
-from utils.scheduler import Periodic
 from utils.plex_scanner import PlexScanner
+from utils.scheduler import Periodic
+from utils.set_limits import ShareLimiter
 
-config = toml.load(Path(Path(__file__).parent, "config.toml"))
-qbitclient = qbittorrentapi.Client(
-    host=config["host"],
-    username=config["username"],
-    password=config["password"],
-)
 
-############################################################
-# LOGGING
-############################################################
-def get_logger(name):
-    """returns logger object
-    Args:
-        name: name of primary module
-    Returns:
-        child logger of given name
-    """
+def get_logger(name, log_level):
     log_formatter = logging.Formatter(
         "%(asctime)s - %(levelname)-10s - %(name)-15s - %(funcName)-20s - %(message)s"
     )
     root_logger = logging.getLogger()
+    logging.getLogger("requests").setLevel(logging.ERROR)
+    logging.getLogger("qbittorrentapi").setLevel(logging.ERROR)
+    logging.getLogger("urllib3").setLevel(logging.ERROR)
 
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("qbittorrentapi").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("watchdog").setLevel(logging.WARNING)
-
-    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler = logging.StreamHandler()
     console_handler.setFormatter(log_formatter)
     root_logger.addHandler(console_handler)
 
-    file_handler = RotatingFileHandler(
-        f"{name}.log", maxBytes=1024 * 1024 * 5, backupCount=5, encoding="utf-8"
+    logs_dir = Path(Path(__file__).parent, "logs")
+    if not logs_dir.exists():
+        logs_dir.mkdir()
+    file_handler = TimedRotatingFileHandler(
+        Path(logs_dir, f"{name}.log"),
+        when="midnight",
+        backupCount=30,
+        encoding="utf-8",
     )
     file_handler.setFormatter(log_formatter)
     root_logger.addHandler(file_handler)
-
-    root_logger.setLevel(config["logLevel"])
+    root_logger.setLevel(log_level)
     return root_logger.getChild(name)
 
 
-log = get_logger("qbitmgr")
-
-############################################################
-# WATCHDOG OBSERVER
-############################################################
-def on_created(event):
-    """funcation to perfom when a new file/directory
-    is created in the incomplete downloads directory
-    presumably when a download starts
-    """
-    log.info("New incomplete download - setting limits")
-    share_limiter = ShareLimiter(config, qbitclient)
-    share_limiter.set_limits()
-
-
-def on_deleted(event):
-    """funcation to perfom when file/directory
-    is deleted in the incomplete downloads directory
-    presumably when a download finishes
-    """
-    time.sleep(20)
-    log.info("Checking for completed seeds to process")
-    cleaner = Cleaner(config, qbitclient)
-    cleaner.clean_seeds(0)
-
-    time.sleep(5)
-    log.info("Download completed - initiating plex library scan, if needed")
-    scanner = PlexScanner(config, qbitclient)
-    scanner.scan_if_needed()
-
-
-def run_observer():
-    """function to run the directory observer
-    to monitor for filesystem changes
-    """
-    event_handler = FileSystemEventHandler()
-
-    # Calling functions
-    event_handler.on_created = on_created
-    event_handler.on_deleted = on_deleted
-
-    # Path to monitor
-    path = config["incompleteDownloadsDir"]
-    observer = Observer()
-    observer.schedule(event_handler, path, recursive=False)
-
-    # Start watchdog observer
-    observer.start()
-    log.info("Directory watcher started")
-    try:
-        while observer.is_alive():
-            observer.join()
-    finally:
-        observer.stop()
-        observer.join()
-
-
-############################################################
-# Completed Seed Cleaner
-############################################################
-def run_cleaner(ignore_age):
-    """function to clean seeds"""
-    cleaner = Cleaner(config, qbitclient)
-    return cleaner.clean_seeds(ignore_age)
-
-
-############################################################
-# Argument Parsing
-############################################################
-def get_args():
+def get_args(genres):
     """parse cli arguments
     Returns: args object
     """
-    genres = list(config["genres"])
     parser = argparse.ArgumentParser(
         description="Create qbittorrent download categories and RSS auto download rules"
     )
@@ -141,9 +55,9 @@ def get_args():
         choices=["run", "add-cat", "add-rule", "clean", "set-limits"],
         help="Command to run",
     )
-    parser.add_argument("--name", required=False, default="", help="Person's name")
+    parser.add_argument("-name", required=False, default="", help="Person's name")
     parser.add_argument(
-        "--genre",
+        "-genre",
         required=False,
         default="",
         choices=genres,
@@ -153,22 +67,41 @@ def get_args():
     return parser.parse_args()
 
 
-############################################################
-# Main
-############################################################
+def periodic_tasks(
+    share_limiter: ShareLimiter,
+    cleaner: Cleaner,
+    plex_scanner: PlexScanner,
+    ignore_age: int,
+):
+    share_limiter.set_limits()
+    cleaner.clean_seeds(ignore_age)
+    plex_scanner.scan_if_needed()
+
+
 def main():
+    config = toml.load(Path(Path(__file__).parent, "config.toml"))
+    args = get_args(list(config["genres"]))
+    log = get_logger("qbitmgr", config["logLevel"])
+    qbitclient = qbittorrentapi.Client(
+        host=config["host"],
+        username=config["username"],
+        password=config["password"],
+    )
     try:
-        args = get_args()
         if args.cmd == "run":
-            observer_thread = threading.Thread(target=run_observer, args=())
-            observer_thread.daemon = False
-            log.debug("Starting directory watcher")
-            observer_thread.start()
             log.info(
-                f"Scheduling cleaner to run every: {config['cleanerInterval']} minutes"
+                f"Scheduling tasks to run every: {config['checkInterval']} minutes"
             )
-            scheduled_cleaner = Periodic(
-                config["cleanerInterval"] * 60, run_cleaner, 120
+            share_limiter = ShareLimiter(config, qbitclient)
+            cleaner = Cleaner(config, qbitclient)
+            plex_scanner = PlexScanner(config, qbitclient)
+            Periodic(
+                config["checkInterval"] * 60,
+                periodic_tasks,
+                share_limiter,
+                cleaner,
+                plex_scanner,
+                20,
             )
         elif args.cmd == "add-rule":
             log.debug("User call to: add new RSS auto downloading rule")
@@ -183,7 +116,7 @@ def main():
         elif args.cmd == "clean":
             log.debug("User call to: clean seeds")
             cleaner = Cleaner(config, qbitclient)
-            cleaner.clean_seeds(120)
+            cleaner.clean_seeds(10)
         elif args.cmd == "set-limits":
             log.debug("User call to: set limits")
             share_limiter = ShareLimiter(config, qbitclient)

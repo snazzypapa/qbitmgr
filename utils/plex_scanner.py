@@ -2,7 +2,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-log = logging.getLogger("plex_scanner")
+log = logging.getLogger(__name__)
 
 
 class PlexScanner:
@@ -38,6 +38,7 @@ class PlexScanner:
         return False
 
     def plex_scan(self):
+        """runs plex scan command as subprocess"""
         s_out = (
             subprocess.check_output(self.config["plexScanCommand"])
             .strip()
@@ -49,6 +50,7 @@ class PlexScanner:
             log.debug(f"Plex scan failed, stdout: '{s_out}'")
 
     def scan_if_needed(self):
+        """determines if scanning plex is required and runs command if needed"""
         completed_downloads = self.qbitclient.torrents_info(status_filter="completed")
         requires_scan = [
             i.hash

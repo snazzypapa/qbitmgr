@@ -1,14 +1,13 @@
-import os
 import glob
-import time
-import shutil
 import logging
+import os
+import shutil
 import subprocess
-from typing import Tuple
+import time
 from fnmatch import filter
+from typing import Tuple
 
-
-log = logging.getLogger("copier")
+log = logging.getLogger(__name__)
 
 
 class CompletedDownload:
