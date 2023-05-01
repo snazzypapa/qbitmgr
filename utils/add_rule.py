@@ -6,9 +6,9 @@ log = logging.getLogger(__name__)
 class RSSRule:
     """creates new RSS auto downloading rule based on config"""
 
-    def __init__(self, config, qbitclient, name, genre):
+    def __init__(self, config, qbitclient, name: str, genre: str):
         self.qbitclient = qbitclient
-        self.name = f"{genre.upper()} - {name}"
+        self.name = name
         self.specification = {
             "enabled": config["genres"][genre]["rssRules"]["enabled"],
             "mustContain": f"{name} {config['genres'][genre]['rssRules']['mustContain']}",
@@ -23,17 +23,27 @@ class RSSRule:
             "ignoreDays": config["genres"][genre]["rssRules"]["ignoreDays"],
             "lastMatch": config["genres"][genre]["rssRules"]["lastMatch"],
             "addPaused": config["genres"][genre]["rssRules"]["addPaused"],
-            "assignedCategory": self.name,
+            "assignedCategory": f"{genre.upper()} - {name}",
             "savePath": config["genres"][genre]["rssRules"]["savePath"],
         }
+        self.replace_separators = config["genres"][genre]["regexReplaceSeparators"]
+        self.genre = genre
 
     def add_rule(self):
         """adds rule to qbittorrent if it does not already exist"""
         existing_rules = self.qbitclient.rss_rules()
-        if self.name not in existing_rules:
-            self.qbitclient.rss.set_rule(
-                rule_name=self.name, rule_def=self.specification
+        pre_existing = False
+        rule_name = f"{self.genre.upper()} - {self.name}"
+        if self.name in existing_rules:
+            pre_existing = True
+        if self.replace_separators:
+            new_name = (
+                self.replace_separators.join(self.name.split())
+                + self.replace_separators
             )
-            log.info(f"Rule created: {self.name}")
+            self.specification["mustContain"] = rf"\b{new_name}"
+        self.qbitclient.rss.set_rule(rule_name=rule_name, rule_def=self.specification)
+        if pre_existing:
+            log.info(f"Updated rule: {rule_name}")
         else:
-            log.info(f"Rule already exists: {self.name}")
+            log.info(f"Rule created: {rule_name}")

@@ -32,10 +32,10 @@ class LimitGroup:
             self.upload_speed_limit, torrent_hashes=self.hashes
         )
         self.qbitclient.torrents_add_tags(self.tags, torrent_hashes=self.hashes)
-        log.debug(f"Limit set to {self.group} for {self.names}")
+        log.info(f"Limit set to {self.group} for {self.names}")
         if self.priority_in_queue:
             self.qbitclient.torrents_top_priority(torrent_hashes=self.hashes)
-            log.debug(f"Moved priority torrents to top of queue: {self.names}")
+            log.info(f"Moved priority torrents to top of queue: {self.names}")
 
 
 class ShareLimiter:
@@ -141,6 +141,7 @@ class ShareLimiter:
         """
         limit_groups = self.assign_limit_groups()
         if not limit_groups:
-            return log.info("No downloads to set limits")
+            log.debug("No downloads to set limits")
+            return
         for limit_group in limit_groups:
             limit_group.set_group_limits()

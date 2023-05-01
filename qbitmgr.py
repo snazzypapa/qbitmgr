@@ -1,3 +1,4 @@
+#!/opt/qbitmgr/venv/bin/python
 import argparse
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -16,7 +17,7 @@ from utils.set_limits import ShareLimiter
 
 def get_logger(name, log_level):
     log_formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)-10s - %(name)-15s - %(funcName)-20s - %(message)s"
+        "%(asctime)s - %(levelname)-10s - %(name)-20s - %(funcName)-20s - %(message)s"
     )
     root_logger = logging.getLogger()
     logging.getLogger("requests").setLevel(logging.ERROR)
@@ -27,13 +28,13 @@ def get_logger(name, log_level):
     console_handler.setFormatter(log_formatter)
     root_logger.addHandler(console_handler)
 
-    logs_dir = Path(Path(__file__).parent, "logs")
+    logs_dir = Path(Path(__file__).resolve().parent, "logs")
     if not logs_dir.exists():
         logs_dir.mkdir()
     file_handler = TimedRotatingFileHandler(
         Path(logs_dir, f"{name}.log"),
         when="midnight",
-        backupCount=30,
+        backupCount=14,
         encoding="utf-8",
     )
     file_handler.setFormatter(log_formatter)
@@ -79,7 +80,7 @@ def periodic_tasks(
 
 
 def main():
-    config = toml.load(Path(Path(__file__).parent, "config.toml"))
+    config = toml.load(Path(Path(__file__).resolve().parent, "config.toml"))
     args = get_args(list(config["genres"]))
     log = get_logger("qbitmgr", config["logLevel"])
     qbitclient = qbittorrentapi.Client(

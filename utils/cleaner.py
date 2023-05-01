@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import subprocess
 import time
 from pathlib import Path
 
@@ -27,6 +28,8 @@ class CompletedSeed:
         completion_on,
         genre,
     ):
+        self.config = config
+        self.genre = genre
         self.qbitclient = qbitclient
         self.name = name
         self.hash = hash
@@ -38,6 +41,7 @@ class CompletedSeed:
         self.keep_dir_structure = config["genres"][genre]["keepDirStructure"]
         self.delete_from_client = config["genres"][genre]["deleteFromClientWhenDone"]
         self.file_exts_to_keep = tuple(config["genres"][genre]["keepSpecificFileTypes"])
+        log.debug(f"{self.name} genre: {genre}")
 
     @staticmethod
     def elapsed_seconds(given_time_since_epoch):
@@ -78,7 +82,7 @@ class CompletedSeed:
             ]
 
     @staticmethod
-    def move_all_files_in_tree_to_another_dir(source_dir, dest_dir):
+    def move_all_files_to_another_dir(source_dir: Path, dest_dir: Path):
         """moves all files in directory tree to a directory in another tree
         Args:
             source_dir: path to directory to get files
@@ -86,14 +90,15 @@ class CompletedSeed:
         Returns:
             none
         """
-        for root, dirs, files in os.walk(source_dir, topdown=False):
-            [
-                (
-                    shutil.move(Path(root, file), dest_dir),
-                    log.debug(f"Moved file: {file}"),
-                )
-                for file in files
-            ]
+        for fs_obj in source_dir.rglob("*"):
+            if fs_obj.is_file():
+                new_path = Path(dest_dir, fs_obj.name)
+                if new_path.exists():
+                    log.info(
+                        f"Cannot move to {dest_dir}, because path already exists for: {fs_obj.name}"
+                    )
+                    continue
+                fs_obj.rename(new_path)
 
     @staticmethod
     def move_single_file(source, dest):
@@ -136,16 +141,22 @@ class CompletedSeed:
             )
         if not self.keep_dir_structure:
             if self.content_path.is_dir():
-                self.move_all_files_in_tree_to_another_dir(
-                    self.content_path, self.save_path
-                )
-                self.content_path.rmdir()
-                log.debug(f"Deleted dir: {self.content_path}")
+                self.move_all_files_to_another_dir(self.content_path, self.save_path)
+                if not any(
+                    self.content_path.iterdir()
+                ):  # if content path is empty, delete it
+                    self.content_path.rmdir()
+                    log.debug(f"Deleted dir: {self.content_path}")
             if self.content_path.is_file():
                 self.move_single_file(self.content_path, self.save_path)
                 self.content_path.parent.rmdir()
                 log.debug(f"Deleted dir for: {self.content_path}")
-        self.delete_in_client()
+        self.delete_in_client()  # this occurs always now. it should handle cases when not able to move files
+        if self.config["genres"][self.genre]["scriptOnDone"]:
+            log.debug("Running subprocess for completed seed")
+            subprocess.run(self.config["genres"][self.genre]["scriptOnDone"])
+
+        log.info(f"Processed completed seed: {self.name}")
 
 
 class Cleaner:
@@ -171,17 +182,23 @@ class Cleaner:
             for i in completed_list
             if i not in seeding_list
             and "Processed" not in i.tags
-            and self.get_genre(i.save_path)
+            and self.get_genre(i.save_path, i.category)
         ]
 
-    def get_genre(self, save_path):
+    def get_genre(self, save_path, category: str):
         """gets genre of torrent
+        first tries to match the torrent's category to a named genre
+        then tries to match based on save path
+
         Args:
             save_path: torrent save_path
         Returns:
             genre from config or False
         """
         genre_path = Path(save_path).parent
+        for key, val in self.config["genres"].items():
+            if key == category:
+                return key
         for key, val in self.config["genres"].items():
             if Path(val["moveToDir"]) == genre_path:
                 return key
@@ -190,19 +207,18 @@ class Cleaner:
     def clean_seeds(self, ignore_age=120):
         """creates objects and tells them to process themselves"""
         if not self.get_completed_seeds():
-            log.info("No completed seeds to clean")
-        else:
-            for i in [
-                CompletedSeed(
-                    self.config,
-                    self.qbitclient,
-                    i.name,
-                    i.hash,
-                    i.content_path,
-                    i.save_path,
-                    i.completion_on,
-                    self.get_genre(i.save_path),
-                )
-                for i in self.get_completed_seeds()
-            ]:
-                i.process_completed_seed(ignore_age)
+            return log.debug("No completed seeds to clean")
+        for i in [
+            CompletedSeed(
+                self.config,
+                self.qbitclient,
+                i.name,
+                i.hash,
+                i.content_path,
+                i.save_path,
+                i.completion_on,
+                self.get_genre(i.save_path, i.category),
+            )
+            for i in self.get_completed_seeds()
+        ]:
+            i.process_completed_seed(ignore_age)
